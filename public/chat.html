@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+  <div id="messages" style="height: 300px; overflow-y: scroll; border: 1px solid #ccc;"></div>
+  <input type="text" id="messageInput" placeholder="Type a message" />
+  <button id="sendBtn">Send</button>
+
+  <script>
+    const socket = io("http://localhost:5000", {
+      transports: ["websocket"]
+    });
+
+    const currentUserId = prompt("Enter your user ID");  // e.g., "1"
+    const otherUserId = prompt("Enter receiver user ID"); // e.g., "2"
+
+    if (!currentUserId || !otherUserId) {
+      alert("User IDs required");
+    }
+
+    socket.emit("join", currentUserId);
+
+    const messagesDiv = document.getElementById("messages");
+    const input = document.getElementById("messageInput");
+    const button = document.getElementById("sendBtn");
+
+    // Send message
+    button.addEventListener("click", () => {
+      const content = input.value.trim();
+      if (!content) return;
+
+      socket.emit("privateMessage", {
+        senderId: currentUserId,
+        receiverId: otherUserId,
+        content
+      });
+
+      input.value = "";
+    });
+
+    // Receive message
+    socket.on("privateMessage", ({ senderId, content }) => {
+      const msg = document.createElement("div");
+      msg.innerText = `${senderId == currentUserId ? 'You' : senderId}: ${content}`;
+      msg.style.color = senderId == currentUserId ? "blue" : "green";
+      messagesDiv.appendChild(msg);
+    });
+  </script>
+</body>
+</html>
